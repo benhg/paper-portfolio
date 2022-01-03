@@ -13,8 +13,11 @@ settlement:
   {symbol: CASH
    value: 1 (special case)
    shares: (whatever is available)
-   transactions : [{amount, price}] (negative price is sale)
+   transactions : [{amount, type, price}] (negative price is sale, zero price is a dividend)
 
+some-label {symbol:  "VBAIX"
+            shares:  4.56(float)
+            transactions:[] }
 
 
 }
