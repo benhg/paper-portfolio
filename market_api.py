@@ -12,3 +12,10 @@ def get_current_price(symbol: str):
     """
     obj = yf.Ticker(symbol)
     return obj.info.regularMarketPrice
+
+def get_last_dividend_date(symbol: str):
+    """
+    Get the last date that a dividend was exercised
+    """
+    obj = yf.Ticker(symbol)
+    return obj.info.regularMarketPrice

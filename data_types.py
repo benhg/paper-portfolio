@@ -4,21 +4,37 @@ data_types.py
 Classes that represent various things in the portfolio
 """
 
+import datetime
 import json
+from enum import Enum, auto
 
 import market_api
+
+class Type(Enum):
+
+
 
 class Transaction:
     """
     Represents a transaction of some stock/bond/etf
-
-    Positive price is a purchase, negative price is a sale
-    Price can be 0 in case of a divident, and has None as from_symbol
+    
+    Price can be 0 in case of a dividend, and has None as from_symbol
     to_symbol is what's being recieved
     from_symbol is what's being spent
     """
 
-    def __init__
+    def __init__(self,
+                 to_symbol):
+
+    def to_json(self):
+        self_dict = {
+            "to_symbol": self.to_symbol,
+            "from_symbol": self.from_symbol,
+            "price": self.price,
+            "quantity": self.quantity,
+            "type": Type
+        }
+        return json.dumps(self_dict)
 
 class Holding:
     """
@@ -55,6 +71,7 @@ class Holding:
             price = market_api.get_current_price(symbol)
         self.transactions_list = transactions_list
         self.price = price;
+        self.last_updated = datetime.date.today
 
     def update_value_held(self):
         """
@@ -87,6 +104,13 @@ class Holding:
 
         }
         return json.dumps(self_dict)
+
+    def check_for_dividends(self):
+        """
+        Check whether a dividend has been issued since this holding was last updated
+        If so, adjust holding's "quantity" and "value_held" to reflect this
+        """
+        pass
 
 class Portfolio:
     """
