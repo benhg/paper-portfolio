@@ -4,7 +4,21 @@ data_types.py
 Classes that represent various things in the portfolio
 """
 
+import json
+
 import market_api
+
+class Transaction:
+    """
+    Represents a transaction of some stock/bond/etf
+
+    Positive price is a purchase, negative price is a sale
+    Price can be 0 in case of a divident, and has None as from_symbol
+    to_symbol is what's being recieved
+    from_symbol is what's being spent
+    """
+
+    def __init__
 
 class Holding:
     """
@@ -12,6 +26,15 @@ class Holding:
 
     Has instance variables for value, price, number held, etc.
     """
+
+    @staticmethod
+    def compute_total_gain_loss(obj: Holding):
+        """
+        Compute the total loss/gain of a Holding
+        by iterating through the list of transactions in that holding
+        Uses each purchase price used to compute
+        """
+        pass
 
     def __init__(self,
                  symbol: str="",
@@ -47,3 +70,28 @@ class Holding:
         if self.symbol != "DOLLAR":
             self.price = market_api.get_current_price(self.symbol)
         return self.price
+
+    def to_json(self) -> str:
+        """
+        Export this Holding to a JSON object
+
+        Return the JSON string
+        """
+        self.update_value_held()
+        self_dict = {
+            "symbol": self.symbol,
+            "quantity": self.quantity,
+            "value_held":self.value_held,
+            "price": self.price,
+            "transactions_list": [transaction.to_json() for transaction in self.transactions_list]
+
+        }
+        return json.dumps(self_dict)
+
+class Portfolio:
+    """
+    represents a whole portfolio
+    Which is a list of Holdings, plus some metadata
+    """
+    pass
+
