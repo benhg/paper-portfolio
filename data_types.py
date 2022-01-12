@@ -11,20 +11,46 @@ from enum import Enum, auto
 import market_api
 
 class Type(Enum):
+    Sell = auto()
+    Buy = auto()
+    Dividend = auto()
+    Split = auto()
+    Type_Max = auto()
 
 
 
 class Transaction:
     """
     Represents a transaction of some stock/bond/etf
-    
+
     Price can be 0 in case of a dividend, and has None as from_symbol
     to_symbol is what's being recieved
     from_symbol is what's being spent
+    TODO: think about how to handle splits.
     """
 
+    @staticmethod
+    def from_json(json_txt):
+        dict_self = json.loads(json_txt)
+        return Transaction(to_symbol=dict_self["to_symbol"],
+                           from_symbol=dict_self["from_symbol"],
+                           price=dict_self["price"],
+                           quantity=dict_self["quantity"],
+                           xaction_type=dict_self["xaction_type"])
+
+
     def __init__(self,
-                 to_symbol):
+                 to_symbol="",
+                 from_symbol="",
+                 price=0,
+                 quantity=0,
+                 xaction_type=Type_Max):
+        self.to_symbol = to_symbol
+        self.from_symbol = from_symbol
+        self.price = price
+        self.quantity = quantity
+        self.type = xaction_type
+
 
     def to_json(self):
         self_dict = {
@@ -32,7 +58,7 @@ class Transaction:
             "from_symbol": self.from_symbol,
             "price": self.price,
             "quantity": self.quantity,
-            "type": Type
+            "type": self.type
         }
         return json.dumps(self_dict)
 
@@ -51,6 +77,10 @@ class Holding:
         Uses each purchase price used to compute
         """
         pass
+
+    @staticmethod
+    def from_json(json_txt):
+        return Holding()
 
     def __init__(self,
                  symbol: str="",
@@ -112,10 +142,35 @@ class Holding:
         """
         pass
 
+class PortfolioMetadata:
+
+    @staticmethod
+    def from_json():
+        pass
+
+    def __init__():
+        pass
+
+    def to_json():
+        pass
+
 class Portfolio:
     """
     represents a whole portfolio
     Which is a list of Holdings, plus some metadata
     """
-    pass
+
+    @staticmethod
+    def from_json(json_txt):
+        return Portfolio()
+
+    def __init__(self,
+                 metadata=PortfolioMetadata(),
+                 portfolio_name="",
+                 ):
+        pass
+
+    def to_json():
+        pass
+
 
