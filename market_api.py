@@ -8,7 +8,7 @@ import yfinance as yf
 
 import datetime
 
-def get_current _price(symbol: str):
+def get_current_price(symbol: str):
     """
     Get the current price of a whatever identified by a symbol
     """

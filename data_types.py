@@ -57,7 +57,7 @@ class Transaction:
             "quantity": self.quantity,
             "type": self.type
         }
-        return json.dumps(self_dict)
+        return json.dumps(self_dict, indent=2)
 
 
 class Holding:
@@ -134,7 +134,7 @@ class Holding:
             "transactions_list":
             [transaction.to_json() for transaction in self.transactions_list]
         }
-        return json.dumps(self_dict)
+        return json.dumps(self_dict, indent=2)
 
     def check_for_dividends(self):
         """
@@ -187,7 +187,7 @@ class PortfolioMetadata:
             "portfolio_name": self.portfolio_name,
             "settlement_symbol": self.settlement_symbol
         }
-        return json.dumps(self_dict)
+        return json.dumps(self_dict, indent=2)
 
 
 class Portfolio:
@@ -228,4 +228,4 @@ class Portfolio:
             "metadata": self.metadata.to_json(),
             "holdings_list": [h.to_json() for h in self.holdings_list]
         }
-        return json.dumps(self_dict)
+        return json.dumps(self_dict, indent=2)
