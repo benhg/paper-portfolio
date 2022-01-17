@@ -19,47 +19,6 @@ class Type(Enum):
     Type_Max = auto()
 
 
-class Transaction:
-    """
-    Represents a transaction of some stock/bond/etf
-
-    Price can be 0 in case of a dividend, and has None as from_symbol
-    to_symbol is what's being recieved
-    from_symbol is what's being spent
-    TODO: think about how to handle splits.
-    """
-    @staticmethod
-    def from_json(json_txt):
-        dict_self = json.loads(json_txt)
-        return Transaction(to_symbol=dict_self["to_symbol"],
-                           from_symbol=dict_self["from_symbol"],
-                           price=dict_self["price"],
-                           quantity=dict_self["quantity"],
-                           xaction_type=dict_self["xaction_type"])
-
-    def __init__(self,
-                 to_symbol="",
-                 from_symbol="",
-                 price=0,
-                 quantity=0,
-                 xaction_type=Type_Max):
-        self.to_symbol = to_symbol
-        self.from_symbol = from_symbol
-        self.price = price
-        self.quantity = quantity
-        self.type = xaction_type
-
-    def to_json(self):
-        self_dict = {
-            "to_symbol": self.to_symbol,
-            "from_symbol": self.from_symbol,
-            "price": self.price,
-            "quantity": self.quantity,
-            "type": self.type
-        }
-        return json.dumps(self_dict, indent=2)
-
-
 class Holding:
     """
     Represents some amount of a stock/bond/ETF/whatever
@@ -67,7 +26,7 @@ class Holding:
     Has instance variables for value, price, number held, etc.
     """
     @staticmethod
-    def compute_total_gain_loss(obj: Holding):
+    def compute_total_gain_loss(obj):
         """
         Compute the total loss/gain of a Holding
         by iterating through the list of transactions in that holding
@@ -98,7 +57,7 @@ class Holding:
             price = market_api.get_current_price(symbol)
         self.transactions_list = transactions_list
         self.price = price
-        self.last_updated = datetime.date.today()
+        self.last_updated = datetime.date.today().strftime("%Y-%m-%d")
 
     def update_value_held(self):
         """
@@ -144,6 +103,47 @@ class Holding:
         pass
 
 
+class Transaction:
+    """
+    Represents a transaction of some stock/bond/etf
+
+    Price can be 0 in case of a dividend, and has None as from_symbol
+    to_symbol is what's being recieved
+    from_symbol is what's being spent
+    TODO: think about how to handle splits.
+    """
+    @staticmethod
+    def from_json(json_txt):
+        dict_self = json.loads(json_txt)
+        return Transaction(to_symbol=dict_self["to_symbol"],
+                           from_symbol=dict_self["from_symbol"],
+                           price=dict_self["price"],
+                           quantity=dict_self["quantity"],
+                           xaction_type=dict_self["xaction_type"])
+
+    def __init__(self,
+                 to_symbol="",
+                 from_symbol="",
+                 price=0,
+                 quantity=0,
+                 xaction_type=Type.Type_Max):
+        self.to_symbol = to_symbol
+        self.from_symbol = from_symbol
+        self.price = price
+        self.quantity = quantity
+        self.type = xaction_type
+
+    def to_json(self):
+        self_dict = {
+            "to_symbol": self.to_symbol,
+            "from_symbol": self.from_symbol,
+            "price": self.price,
+            "quantity": self.quantity,
+            "type": self.type
+        }
+        return json.dumps(self_dict, indent=2)
+
+
 class PortfolioMetadata:
     """
     Wrapper class to hold metadata about a portfolio
@@ -154,7 +154,7 @@ class PortfolioMetadata:
         return PortfolioMetadata(
             total_cash_entered=self_dict["total_cash_entered"],
             date_opened=self_dict["date_opened"],
-            date_last_accessed=datetime.date.today(),
+            date_last_accessed=datetime.date.today().strftime("%Y-%m-%d"),
             total_value=self_dict["total_value"])
 
     def __init__(self,
@@ -165,7 +165,7 @@ class PortfolioMetadata:
                  settlement_symbol=""):
         self.total_cash_entered = total_cash_entered
         self.date_opened = date_opened
-        self.date_last_accessed = datetime.date.today()
+        self.date_last_accessed = datetime.date.today().strftime("%Y-%m-%d")
         self.total_value = total_value
         self.portfolio_name = portfolio_name
         self.settlement_symbol = settlement_symbol
@@ -176,9 +176,9 @@ class PortfolioMetadata:
         return self.total_value - self.total_cash_entered
 
     def update_last_accessed_date(self):
-        self.date_last_accessed = datetime.date.today()
+        self.date_last_accessed = datetime.date.today().strftime("%Y-%m-%d")
 
-    def to_json():
+    def to_json(self):
         self_dict = {
             "total_cash_entered": self.total_cash_entered,
             "date_opened": self.date_opened,
@@ -220,10 +220,11 @@ class Portfolio:
                                             settlement_symbol="DOLLAR"),
                  holdings_list=None):
         self.metadata = metadata
-        if self.holdings_list is not None:
+        self.holdings_list = []
+        if holdings_list is not None:
             self.holdings_list = holdings_list
 
-    def to_json():
+    def to_json(self):
         self_dict = {
             "metadata": self.metadata.to_json(),
             "holdings_list": [h.to_json() for h in self.holdings_list]
