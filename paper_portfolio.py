@@ -79,6 +79,9 @@ def check_value(symbol, quantity):
 def update(portfolio_name):
     pass
 
+def list():
+	pass
+
 
 if __name__ == '__main__':
     act_to_func = {
@@ -88,7 +91,8 @@ if __name__ == '__main__':
         "buy": buy,
         "sell": sell,
         "check_value": check_value,
-        "update": update
+        "update": update,
+        "list": list
     }
     parser = argparse.ArgumentParser(
         description="View and manage paper portfolios")
