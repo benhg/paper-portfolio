@@ -230,3 +230,13 @@ class Portfolio:
             "holdings_list": [h.to_json() for h in self.holdings_list]
         }
         return json.dumps(self_dict, indent=2)
+
+    def invest(self, symbol, amount):
+        """
+        Invest <amount> of shares in <symbol>
+
+        If <symbol> doesn't exist, add to list
+
+        If <symbol> is not <self.settlement_symbol>, subtract equivalent today dollars from settlement
+        """
+        pass

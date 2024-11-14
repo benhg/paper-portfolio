@@ -9,6 +9,8 @@ import argparse
 from data_types import *
 from config import PORTFOLIO_STORAGE_DIR
 
+import os
+
 
 def parse_args(parser: argparse.ArgumentParser):
     """
@@ -53,7 +55,10 @@ def create(portfolio_name):
 
 
 def delete(portfolio_name):
-    pass
+    """
+    Delete a portfolio
+    """
+    os.remove(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json")
 
 
 def invest(portfolio_name, quantity):
@@ -61,7 +66,12 @@ def invest(portfolio_name, quantity):
 	Invest in a portfolio - add money to the settlement fund
 	Quantity here is both number of shares in the settlement fund and also price in dollars 
 	"""
-    pass
+    with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "r") as fh:
+        portfolio_dict_txt = fh.read()
+        portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
+        settlement_symbol = portfolio_obj.metadata.settlement_symbol
+        portfolio_obj.invest(settlement_symbol, quantity)
+        save_to_disk(portfolio_name, portfolio_obj) 
 
 
 def buy(portfolio_name, symbol, quantity):
@@ -73,10 +83,25 @@ def sell(portfolio_name, symbol, quantity):
 
 
 def check_value(symbol, quantity):
+    """
+    Print portfolio summary
+    """
     pass
 
+def save_to_disk(portfolio_name, portfolio_obj):
+    """
+    Save the portfolio to disk 
+    """
+    json_str = portfolio_obj.to_json()
+    with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "w") as fh:
+        fh.write(json_str)
 
 def update(portfolio_name):
+    """
+    1. Check for dividends
+    2. update value in shares
+    3. Save portfolio to disk
+    """
     pass
 
 def list():
