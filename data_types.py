@@ -201,14 +201,17 @@ class Portfolio:
         return Portfolio(metadata=PortfolioMetadata.from_json(
             json.dumps(self_dict["metadata"])),
                          holdings_list=[
+
+                            { holding.symbol :
                              Holding.from_json(json.dumps(h))
                              for h in self_dict[holdings_list]
+                             }
                          ])
 
     @staticmethod
     def compute_total_gain_loss(portfolio):
         gain_loss = 0
-        for holding in portfolio.holdings_list:
+        for holding in portfolio.holdings_list.values():
             gain_loss += Holding.compute_total_gain_loss(holding)
         return gain_loss
 
@@ -220,14 +223,15 @@ class Portfolio:
                                             settlement_symbol="DOLLAR"),
                  holdings_list=None):
         self.metadata = metadata
-        self.holdings_list = []
+        self.holdings_list = {}
         if holdings_list is not None:
             self.holdings_list = holdings_list
+
 
     def to_json(self):
         self_dict = {
             "metadata": self.metadata.to_json(),
-            "holdings_list": [h.to_json() for h in self.holdings_list]
+            "holdings_list": {h.symbol: h.to_json() for h in self.holdings_list}
         }
         return json.dumps(self_dict, indent=2)
 
@@ -240,3 +244,9 @@ class Portfolio:
         If <symbol> is not <self.settlement_symbol>, subtract equivalent today dollars from settlement
         """
         pass
+
+    def sell(self, symbol, amount):
+        """
+        Sell <amount> of shares in <symbol>. Add equivalent today dollars to settlement.
+
+        """
