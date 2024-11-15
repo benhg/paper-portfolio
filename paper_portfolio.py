@@ -11,11 +11,10 @@ import market_api
 from config import PORTFOLIO_STORAGE_DIR
 
 import os
-
-
 """
 Public API
 """
+
 
 def create(portfolio_name, symbol, quantity):
     portfolio = Portfolio(
@@ -51,6 +50,7 @@ def invest(portfolio_name, symbol, quantity):
     portfolio_obj.invest(settlement_symbol, quantity)
     _save_to_disk(portfolio_name, portfolio_obj)
 
+
 def withdraw(portfolio_name, symbol, quantity):
     """
     Withdraw from a portfolio - take money out of the settlement fund
@@ -67,7 +67,7 @@ def buy(portfolio_name, symbol, quantity):
     Invest in a portfolio - add money to the settlement fund
     Quantity here is both number of shares in the settlement fund and also price in dollars 
     """
-    portfolio_obj = _load_from_disk(portfolio_name)  
+    portfolio_obj = _load_from_disk(portfolio_name)
     portfolio_obj.invest(symbol, quantity)
     _save_to_disk(portfolio_name, portfolio_obj)
 
@@ -84,6 +84,7 @@ def check_value(name, symbol, quantity):
     Check value of a specific stock
     """
     print(f"Market price of {symbol} : {market_api.get_current_price(symbol)}")
+
 
 def update(portfolio_name, symbol, quantity):
     """
@@ -102,15 +103,18 @@ def print_summary(portfolio_name, symbol, quantity):
     """
     pass
 
+
 """
 Non-API functions
 """
+
 
 def _load_from_disk(portfolio_name):
     with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "r") as fh:
         portfolio_dict_txt = fh.read()
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
         return portfolio_obj
+
 
 def _save_to_disk(portfolio_name, portfolio_obj):
     """
@@ -119,6 +123,7 @@ def _save_to_disk(portfolio_name, portfolio_obj):
     json_str = json.dumps(portfolio_obj.to_json(), indent=2)
     with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "w") as fh:
         fh.write(json_str)
+
 
 def _parse_args(parser: argparse.ArgumentParser):
     """
@@ -147,6 +152,7 @@ def _parse_args(parser: argparse.ArgumentParser):
         type=float)
     args = parser.parse_args()
     return args
+
 
 """
 Switchboard

@@ -22,7 +22,7 @@ def get_last_dividend_date(symbol: str):
     Get the last date that a dividend was exercised
     """
     obj = yf.Ticker(symbol)
-    return datetime.date.fromtimestamp(obj.info.lastDividendDate)
+    return datetime.date.fromtimestamp(obj.info["lastDividendDate"])
 
 
 def get_last_dividend_value(symbol: str):
@@ -30,10 +30,11 @@ def get_last_dividend_value(symbol: str):
     Get the value of the last dividend, measured in number of shares
     """
     obj = yf.Ticker(symbol)
-    last_dividend_date = datetime.date.fromtimestamp(obj.info.lastDividendDate)
+    last_dividend_date = datetime.date.fromtimestamp(
+        obj.info["lastDividendDate"])
     next_week = datetime.date.fromtimestamp(
-        (obj.info.lastDividendDate + (24 * 3600 * 7)))
+        (obj.info["lastDividendDate"] + (24 * 3600 * 7)))
     history = obj.history(start=last_dividend_date, end=next_week)
     share_price = history.iloc[0]["Close"]
-    dividend_cash_value = obj.lastDividendValue
+    dividend_cash_value = obj.info["lastDividendDate"]
     return (dividend_cash_value / share_price)

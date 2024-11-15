@@ -26,11 +26,17 @@ class InvestmentException(Exception):
 class InvestmentType(IntEnum):
     Sell = 0
     Buy = 1
-    Dividend = 2
-    Split = 3
-    Investment = 4
-    Withdrawl = 5
-    InvestmentType_Max = 6
+    Dividend_Reinvest = 2
+    Dividend_Settle = 3
+    Split = 4
+    Investment = 5
+    Withdrawl = 6
+    InvestmentType_Max = 7
+
+
+class DividendBehavior(IntEnum):
+    Reinvest = 0
+    Settlement = 1
 
 
 class Holding:
@@ -55,6 +61,8 @@ class Holding:
         return Holding(symbol=dict_self["symbol"],
                        quantity=dict_self["quantity"],
                        price=dict_self["price"],
+                       last_updated=dict_self["last_updated"],
+                       dividend_behavior=dict_self["dividend_behavior"],
                        transactions_list=[
                            Transaction.from_json(json.dumps(t))
                            for t in dict_self["transactions_list"]
@@ -64,7 +72,9 @@ class Holding:
                  symbol: str = "",
                  quantity: int = 0,
                  price: int = 0,
-                 transactions_list: object = None):
+                 last_updated: str = "",
+                 transactions_list: object = None,
+                 dividend_behavior=DividendBehavior.Reinvest):
         """
         initialize object
         """
@@ -79,7 +89,8 @@ class Holding:
         else:
             price = market_api.get_current_price(symbol)
         self.transactions_list = transactions_list
-        self.last_updated = datetime.date.today().strftime("%Y-%m-%d")
+        self.last_updated = last_updated
+        self.dividend_behavior = dividend_behavior
 
     def update_value_held(self):
         """
@@ -114,6 +125,10 @@ class Holding:
             self.value_held,
             "price":
             self.price,
+            "last_updated":
+            datetime.date.today().strftime("%Y-%m-%d"),
+            "dividend_behavior":
+            self.dividend_behavior,
             "transactions_list":
             [transaction.to_json() for transaction in self.transactions_list]
         }
@@ -123,9 +138,39 @@ class Holding:
         """
         Check whether a dividend has been issued since this holding was last updated
         If so, adjust holding's "quantity" and "value_held" to reflect this
+
+        returns amount to add to settlement fund
         """
-        last_dividend_date = get_last_dividend_date(self.symbol)
-        print(last_dividend_date)
+        dollars = 0
+        shares = 0
+        last_dividend_date = market_api.get_last_dividend_date(self.symbol)
+        last_updated = datetime.datetime.strptime(self.last_updated,
+                                                  "%Y-%m-%d").date()
+        if last_updated < last_dividend_date:
+            # Do the update. Get the share value in number of shares, assume we reinvest
+            shares = market_api.get_last_dividend_value(self.symbol)
+            if self.dividend_behavior == DividendBehavior.Reinvest:
+                self.quantity += shares
+            elif self.dividend_behavior == DividendBehavior.Settlement:
+                self.update_market_price()
+                dollars = shares * self.price
+        else:
+            return 0
+
+        dividend_type = InvestmentType.Dividend_Reinvest if self.dividend_behavior == DividendBehavior.Reinvest else InvestmentType.Dividend_Settle
+        to_symbol = self.symbol if self.dividend_behavior == DividendBehavior.Reinvest else "DOLLAR"
+        from_symbol = self.symbol
+
+        self.transactions_list.append(
+            Transaction(to_symbol=to_symbol,
+                        from_symbol=from_symbol,
+                        price=self.price,
+                        quantity=shares,
+                        xaction_type=dividend_type,
+                        date=datetime.date.today().strftime("%Y-%m-%d")))
+
+        self.update_value_held()
+        return dollars
 
 
 class Transaction:
@@ -162,6 +207,9 @@ class Transaction:
         self.type = xaction_type
         self.date = date
 
+    def __repr__(self):
+        return str(self.to_json())
+
     def to_json(self):
         self_dict = {
             "to_symbol": self.to_symbol,
@@ -189,7 +237,8 @@ class PortfolioMetadata:
             total_value=self_dict["total_value"],
             settlement_symbol=self_dict["settlement_symbol"],
             portfolio_name=self_dict["portfolio_name"],
-            total_cash_withdrawn=self_dict["total_cash_withdrawn"])
+            total_cash_withdrawn=self_dict["total_cash_withdrawn"],
+            dividend_behavior=self_dict["dividend_behavior"])
 
     def __init__(self,
                  total_cash_entered=0,
@@ -198,7 +247,8 @@ class PortfolioMetadata:
                  portfolio_name="",
                  settlement_symbol="",
                  date_last_accessed=0,
-                 total_cash_withdrawn=0):
+                 total_cash_withdrawn=0,
+                 dividend_behavior=DividendBehavior.Reinvest):
         self.total_cash_entered = total_cash_entered
         self.date_opened = date_opened
         self.date_last_accessed = datetime.date.today().strftime("%Y-%m-%d")
@@ -206,6 +256,7 @@ class PortfolioMetadata:
         self.portfolio_name = portfolio_name
         self.settlement_symbol = settlement_symbol
         self.total_cash_withdrawn = total_cash_withdrawn
+        self.dividend_behavior = dividend_behavior
 
     @property
     def gain_loss(self):
@@ -223,7 +274,8 @@ class PortfolioMetadata:
             "date_last_accessed": self.date_last_accessed,
             "total_value": self.total_value,
             "portfolio_name": self.portfolio_name,
-            "settlement_symbol": self.settlement_symbol
+            "settlement_symbol": self.settlement_symbol,
+            "dividend_behavior": self.dividend_behavior
         }
         return self_dict
 
@@ -281,6 +333,10 @@ class Portfolio:
 
         If <symbol> is not <self.settlement_symbol>, subtract equivalent today dollars from settlement
         """
+
+        if amount == 0:
+            return
+
         if self.metadata.settlement_symbol == symbol:
             self.metadata.total_cash_entered += amount
             self.holdings_list[symbol].value_held += (amount)
@@ -322,16 +378,22 @@ class Portfolio:
         For each holding:
         - Update price
         - Check for dividends
+        - update total gain/loss
         """
         for key, holding in self.holdings_list.items():
-            holding[key].update_value_held()
-            holding[key].check_for_dividends()
+            if (key == self.metadata.settlement_symbol):
+                continue
+            dollars = self.holdings_list[key].check_for_dividends()
+            self.invest(self.metadata.settlement_symbol, dollars)
+            self.holdings_list[key].update_value_held()
 
     def sell(self, symbol, amount):
         """
         Sell <amount> of shares in <symbol>. Add equivalent today dollars to settlement.
 
         """
+        if amount == 0:
+            return
 
         if self.metadata.settlement_symbol == symbol:
             self.metadata.total_cash_withdrawn += amount
