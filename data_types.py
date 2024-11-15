@@ -145,7 +145,8 @@ class Transaction:
                            from_symbol=dict_self["from_symbol"],
                            price=dict_self["price"],
                            quantity=dict_self["quantity"],
-                           xaction_type=dict_self["xaction_type"])
+                           xaction_type=dict_self["xaction_type"],
+                           date=dict_self["date"])
 
     def __init__(self,
                  to_symbol="",
@@ -159,6 +160,7 @@ class Transaction:
         self.price = price
         self.quantity = quantity
         self.type = xaction_type
+        self.date = date
 
     def to_json(self):
         self_dict = {
@@ -166,7 +168,8 @@ class Transaction:
             "from_symbol": self.from_symbol,
             "price": self.price,
             "quantity": self.quantity,
-            "xaction_type": self.type
+            "xaction_type": self.type,
+            "date": self.date
         }
         return self_dict
 
@@ -287,7 +290,8 @@ class Portfolio:
                             from_symbol="",
                             price=amount,
                             quantity=amount,
-                            xaction_type=InvestmentType.Investment))
+                            xaction_type=InvestmentType.Investment,
+                            date=datetime.date.today().strftime("%Y-%m-%d")))
             return
 
         holding = self.holdings_list.get(symbol, Holding(symbol=symbol))
@@ -298,13 +302,15 @@ class Portfolio:
             raise InvestmentException("Not Enough Money!")
         set_holding.value_held -= (amount * holding.price)
         holding.value_held += (amount * holding.price)
+        holding.quantity += amount
 
         holding.transactions_list.append(
             Transaction(to_symbol=symbol,
                         from_symbol=self.metadata.settlement_symbol,
                         price=holding.price,
                         quantity=amount,
-                        xaction_type=InvestmentType.Buy))
+                        xaction_type=InvestmentType.Buy,
+                        date=datetime.date.today().strftime("%Y-%m-%d")))
 
         holding.update_value_held()
 
@@ -336,7 +342,8 @@ class Portfolio:
                             from_symbol="",
                             price=amount,
                             quantity=amount,
-                            xaction_type=InvestmentType.Withdrawl))
+                            xaction_type=InvestmentType.Withdrawl,
+                            date=datetime.date.today().strftime("%Y-%m-%d")))
             return
 
         if symbol not in self.holdings_list.keys():
@@ -356,7 +363,9 @@ class Portfolio:
                         from_symbol=symbol,
                         price=holding.price,
                         quantity=amount,
-                        xaction_type=InvestmentType.Sell))
+                        xaction_type=InvestmentType.Sell,
+                        date=datetime.date.today().strftime("%Y-%m-%d")))
+        holding.quantity -= amount
 
         holding.update_value_held()
 
