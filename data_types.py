@@ -10,10 +10,12 @@ from enum import IntEnum, auto
 
 import market_api
 
+
 class InvestmentException(Exception):
     """
     Error class.
     """
+
     def __init__(self, msg):
         self.msg = msg
 
@@ -37,6 +39,7 @@ class Holding:
 
     Has instance variables for value, price, number held, etc.
     """
+
     @staticmethod
     def compute_total_gain_loss(obj):
         """
@@ -52,7 +55,10 @@ class Holding:
         return Holding(symbol=dict_self["symbol"],
                        quantity=dict_self["quantity"],
                        price=dict_self["price"],
-                       transactions_list=[Transaction.from_json(json.dumps(t)) for t in dict_self["transactions_list"]])
+                       transactions_list=[
+                           Transaction.from_json(json.dumps(t))
+                           for t in dict_self["transactions_list"]
+                       ])
 
     def __init__(self,
                  symbol: str = "",
@@ -131,6 +137,7 @@ class Transaction:
     from_symbol is what's being spent
     TODO: think about how to handle splits.
     """
+
     @staticmethod
     def from_json(json_txt):
         dict_self = json.loads(json_txt)
@@ -168,6 +175,7 @@ class PortfolioMetadata:
     """
     Wrapper class to hold metadata about a portfolio
     """
+
     @staticmethod
     def from_json(json_txt):
         self_dict = json.loads(json_txt)
@@ -177,7 +185,7 @@ class PortfolioMetadata:
             date_last_accessed=datetime.date.today().strftime("%Y-%m-%d"),
             total_value=self_dict["total_value"],
             settlement_symbol=self_dict["settlement_symbol"],
-            portfolio_name = self_dict["portfolio_name"],
+            portfolio_name=self_dict["portfolio_name"],
             total_cash_withdrawn=self_dict["total_cash_withdrawn"])
 
     def __init__(self,
@@ -222,17 +230,16 @@ class Portfolio:
     represents a whole portfolio
     Which is a list of Holdings, plus some metadata
     """
+
     @staticmethod
     def from_json(json_txt):
         self_dict = json.loads(json_txt)
         return Portfolio(metadata=PortfolioMetadata.from_json(
             json.dumps(self_dict["metadata"])),
-                         holdings_list=
-                            { h.get("symbol") :
-                             Holding.from_json(json.dumps(h))
+                         holdings_list={
+                             h.get("symbol"): Holding.from_json(json.dumps(h))
                              for h in self_dict["holdings_list"].values()
-                             }
-                         )
+                         })
 
     @staticmethod
     def compute_total_gain_loss(portfolio):
@@ -253,11 +260,13 @@ class Portfolio:
         if holdings_list is not None:
             self.holdings_list = holdings_list
 
-
     def to_json(self):
         self_dict = {
             "metadata": self.metadata.to_json(),
-            "holdings_list": {h.symbol: h.to_json() for h in self.holdings_list.values()}
+            "holdings_list": {
+                h.symbol: h.to_json()
+                for h in self.holdings_list.values()
+            }
         }
         return self_dict
 
@@ -273,14 +282,13 @@ class Portfolio:
             self.metadata.total_cash_entered += amount
             self.holdings_list[symbol].value_held += (amount)
             self.holdings_list[symbol].quantity += (amount)
-            self.holdings_list[symbol].transactions_list.append(Transaction(
-                 to_symbol=symbol,
-                 from_symbol="",
-                 price=amount,
-                 quantity=amount,
-                 xaction_type=InvestmentType.Investment))
+            self.holdings_list[symbol].transactions_list.append(
+                Transaction(to_symbol=symbol,
+                            from_symbol="",
+                            price=amount,
+                            quantity=amount,
+                            xaction_type=InvestmentType.Investment))
             return
-
 
         holding = self.holdings_list.get(symbol, Holding(symbol=symbol))
         holding.update_value_held()
@@ -291,13 +299,12 @@ class Portfolio:
         set_holding.value_held -= (amount * holding.price)
         holding.value_held += (amount * holding.price)
 
-
-        holding.transactions_list.append(Transaction(
-                 to_symbol=symbol,
-                 from_symbol=self.metadata.settlement_symbol,
-                 price=holding.price,
-                 quantity=amount,
-                 xaction_type=InvestmentType.Buy))
+        holding.transactions_list.append(
+            Transaction(to_symbol=symbol,
+                        from_symbol=self.metadata.settlement_symbol,
+                        price=holding.price,
+                        quantity=amount,
+                        xaction_type=InvestmentType.Buy))
 
         holding.update_value_held()
 
@@ -314,7 +321,6 @@ class Portfolio:
             holding[key].update_value_held()
             holding[key].check_for_dividends()
 
-
     def sell(self, symbol, amount):
         """
         Sell <amount> of shares in <symbol>. Add equivalent today dollars to settlement.
@@ -325,12 +331,12 @@ class Portfolio:
             self.metadata.total_cash_withdrawn += amount
             self.holdings_list[symbol].value_held -= (amount)
             self.holdings_list[symbol].quantity -= (amount)
-            self.holdings_list[symbol].transactions_list.append(Transaction(
-                 to_symbol=symbol,
-                 from_symbol="",
-                 price=amount,
-                 quantity=amount,
-                 xaction_type=InvestmentType.Withdrawl))
+            self.holdings_list[symbol].transactions_list.append(
+                Transaction(to_symbol=symbol,
+                            from_symbol="",
+                            price=amount,
+                            quantity=amount,
+                            xaction_type=InvestmentType.Withdrawl))
             return
 
         if symbol not in self.holdings_list.keys():
@@ -345,16 +351,14 @@ class Portfolio:
         set_holding = self.holdings_list[self.metadata.settlement_symbol]
         set_holding.quantity += amount
         holding.value_held -= (amount * holding.price)
-        holding.transactions_list.append(Transaction(
-                 to_symbol=self.metadata.settlement_symbol,
-                 from_symbol=symbol,
-                 price=holding.price,
-                 quantity=amount,
-                 xaction_type=InvestmentType.Sell))
+        holding.transactions_list.append(
+            Transaction(to_symbol=self.metadata.settlement_symbol,
+                        from_symbol=symbol,
+                        price=holding.price,
+                        quantity=amount,
+                        xaction_type=InvestmentType.Sell))
 
         holding.update_value_held()
 
         self.holdings_list[self.metadata.settlement_symbol] = set_holding
         self.holdings_list[symbol] = holding
-
-

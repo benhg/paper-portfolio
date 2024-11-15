@@ -50,8 +50,8 @@ def create(portfolio_name, symbol, quantity):
                                    portfolio_name=portfolio_name,
                                    settlement_symbol="DOLLAR"))
     portfolio.holdings_list["DOLLAR"] = Holding(symbol="DOLLAR",
-                                                             quantity=0,
-                                                             price=1)
+                                                quantity=0,
+                                                price=1)
 
     # Check if file exists here
     if os.path.exists(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json"):
@@ -76,7 +76,7 @@ def invest(portfolio_name, symbol, quantity):
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
         settlement_symbol = portfolio_obj.metadata.settlement_symbol
         portfolio_obj.invest(settlement_symbol, quantity)
-        save_to_disk(portfolio_name, portfolio_obj) 
+        save_to_disk(portfolio_name, portfolio_obj)
 
 
 def buy(portfolio_name, symbol, quantity):
@@ -88,7 +88,7 @@ def buy(portfolio_name, symbol, quantity):
         portfolio_dict_txt = fh.read()
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
         portfolio_obj.invest(symbol, quantity)
-        save_to_disk(portfolio_name, portfolio_obj) 
+        save_to_disk(portfolio_name, portfolio_obj)
 
 
 def sell(portfolio_name, symbol, quantity):
@@ -97,7 +97,7 @@ def sell(portfolio_name, symbol, quantity):
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
         settlement_symbol = portfolio_obj.metadata.settlement_symbol
         portfolio_obj.sell(symbol, quantity)
-        save_to_disk(portfolio_name, portfolio_obj) 
+        save_to_disk(portfolio_name, portfolio_obj)
 
 
 def check_value(name, symbol, quantity):
@@ -106,6 +106,7 @@ def check_value(name, symbol, quantity):
     """
     print(f"Market price of {symbol} : {market_api.get_current_price(symbol)}")
 
+
 def save_to_disk(portfolio_name, portfolio_obj):
     """
     Save the portfolio to disk 
@@ -113,6 +114,7 @@ def save_to_disk(portfolio_name, portfolio_obj):
     json_str = json.dumps(portfolio_obj.to_json(), indent=2)
     with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "w") as fh:
         fh.write(json_str)
+
 
 def update(portfolio_name, symbol, quantity):
     """
@@ -124,7 +126,8 @@ def update(portfolio_name, symbol, quantity):
         portfolio_dict_txt = fh.read()
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
         portfolio_obj.update()
-        save_to_disk(portfolio_name, portfolio_obj) 
+        save_to_disk(portfolio_name, portfolio_obj)
+
 
 def print_summary(portfolio_name, symbol, quantity):
     """
