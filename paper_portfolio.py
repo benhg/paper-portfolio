@@ -26,8 +26,7 @@ def parse_args(parser: argparse.ArgumentParser):
     parser.add_argument("-n",
                         "--name",
                         help="Portfolio name to act on",
-                        type=str,
-                        required=True)
+                        type=str)
     parser.add_argument(
         "-s",
         "--symbol",
@@ -97,11 +96,11 @@ def sell(portfolio_name, symbol, quantity):
         save_to_disk(portfolio_name, portfolio_obj) 
 
 
-def check_value(symbol, quantity):
+def check_value(symbol):
     """
     Check value of a specific stock
     """
-    return f"Market price of {symbol} : {market_api.get_current_price(symbol)}"
+    print(f"Market price of {symbol} : {market_api.get_current_price(symbol)}")
 
 def save_to_disk(portfolio_name, portfolio_obj):
     """
