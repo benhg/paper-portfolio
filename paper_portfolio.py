@@ -37,31 +37,36 @@ def parse_args(parser: argparse.ArgumentParser):
         "-q",
         "--quantity",
         help="Quantity of item being bought, sold, or invested",
-        type=str)
+        type=float)
     args = parser.parse_args()
     return args
 
 
-def create(portfolio_name):
+def create(portfolio_name, symbol, quantity):
     portfolio = Portfolio(
         metadata=PortfolioMetadata(total_cash_entered=0,
                                    date_opened=0,
                                    total_value=0,
                                    portfolio_name=portfolio_name,
                                    settlement_symbol="DOLLAR"))
-    json_str = portfolio.to_json()
-    with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "w") as fh:
-        fh.write(json_str)
+    portfolio.holdings_list["DOLLAR"] = Holding(symbol="DOLLAR",
+                                                             quantity=0,
+                                                             price=1)
+
+    # Check if file exists here
+    if os.path.exists(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json"):
+        print("ERR: portfolio already exists")
+    save_to_disk(portfolio_name, portfolio)
 
 
-def delete(portfolio_name):
+def delete(portfolio_name, symbol, quantity):
     """
     Delete a portfolio
     """
     os.remove(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json")
 
 
-def invest(portfolio_name, quantity):
+def invest(portfolio_name, symbol, quantity):
     """
 	Invest in a portfolio - add money to the settlement fund
 	Quantity here is both number of shares in the settlement fund and also price in dollars 
@@ -82,8 +87,7 @@ def buy(portfolio_name, symbol, quantity):
     with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "r") as fh:
         portfolio_dict_txt = fh.read()
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
-        settlement_symbol = portfolio_obj.metadata.settlement_symbol
-        portfolio_obj.invest(settlement_symbol, quantity)
+        portfolio_obj.invest(symbol, quantity)
         save_to_disk(portfolio_name, portfolio_obj) 
 
 
@@ -92,11 +96,11 @@ def sell(portfolio_name, symbol, quantity):
         portfolio_dict_txt = fh.read()
         portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
         settlement_symbol = portfolio_obj.metadata.settlement_symbol
-        portfolio_obj.sell(settlement_symbol, quantity)
+        portfolio_obj.sell(symbol, quantity)
         save_to_disk(portfolio_name, portfolio_obj) 
 
 
-def check_value(symbol):
+def check_value(name, symbol, quantity):
     """
     Check value of a specific stock
     """
@@ -106,11 +110,11 @@ def save_to_disk(portfolio_name, portfolio_obj):
     """
     Save the portfolio to disk 
     """
-    json_str = portfolio_obj.to_json()
+    json_str = json.dumps(portfolio_obj.to_json(), indent=2)
     with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "w") as fh:
         fh.write(json_str)
 
-def update(portfolio_name):
+def update(portfolio_name, symbol, quantity):
     """
     1. Check for dividends
     2. update value in shares
@@ -122,7 +126,7 @@ def update(portfolio_name):
         portfolio_obj.update()
         save_to_disk(portfolio_name, portfolio_obj) 
 
-def print_summary(portfolio_name):
+def print_summary(portfolio_name, symbol, quantity):
     """
     Print portfolio summary
     """
@@ -143,4 +147,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="View and manage paper portfolios")
     args = parse_args(parser)
-    act_to_func[args.action](args.name)
+    act_to_func[args.action](args.name, args.symbol, args.quantity)
