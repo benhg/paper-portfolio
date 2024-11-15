@@ -47,15 +47,6 @@ class Holding:
     """
 
     @staticmethod
-    def compute_total_gain_loss(obj):
-        """
-        Compute the total loss/gain of a Holding
-        by iterating through the list of transactions in that holding
-        Uses each purchase price used to compute
-        """
-        pass
-
-    @staticmethod
     def from_json(json_txt):
         dict_self = json.loads(json_txt)
         return Holding(symbol=dict_self["symbol"],
@@ -134,6 +125,14 @@ class Holding:
         }
         return self_dict
 
+    def compute_total_gain_loss(self):
+        """
+        Compute the total loss/gain of a Holding
+        by iterating through the list of transactions in that holding
+        Uses each purchase price used to compute
+        """
+        pass
+
     def check_for_dividends(self):
         """
         Check whether a dividend has been issued since this holding was last updated
@@ -148,7 +147,8 @@ class Holding:
                                                   "%Y-%m-%d").date()
         if last_updated < last_dividend_date:
             # Do the update. Get the share value in number of shares, assume we reinvest
-            shares = market_api.get_last_dividend_value(self.symbol)
+            shares = market_api.get_last_dividend_value(
+                self.symbol) * self.shares
             if self.dividend_behavior == DividendBehavior.Reinvest:
                 self.quantity += shares
             elif self.dividend_behavior == DividendBehavior.Settlement:
@@ -171,6 +171,9 @@ class Holding:
 
         self.update_value_held()
         return dollars
+
+    def __repr__(self):
+        return str(self.to_json())
 
 
 class Transaction:
@@ -220,6 +223,9 @@ class Transaction:
             "date": self.date
         }
         return self_dict
+
+    def __repr__(self):
+        return str(self.to_json())
 
 
 class PortfolioMetadata:
@@ -279,6 +285,9 @@ class PortfolioMetadata:
         }
         return self_dict
 
+    def __repr__(self):
+        return str(self.to_json())
+
 
 class Portfolio:
     """
@@ -296,10 +305,9 @@ class Portfolio:
                              for h in self_dict["holdings_list"].values()
                          })
 
-    @staticmethod
-    def compute_total_gain_loss(portfolio):
+    def compute_total_gain_loss(self):
         gain_loss = 0
-        for holding in portfolio.holdings_list.values():
+        for holding in self.holdings_list.values():
             gain_loss += Holding.compute_total_gain_loss(holding)
         return gain_loss
 
@@ -324,6 +332,9 @@ class Portfolio:
             }
         }
         return self_dict
+
+    def __repr__(self):
+        return str(self.to_json())
 
     def invest(self, symbol, amount):
         """
@@ -390,7 +401,6 @@ class Portfolio:
     def sell(self, symbol, amount):
         """
         Sell <amount> of shares in <symbol>. Add equivalent today dollars to settlement.
-
         """
         if amount == 0:
             return

@@ -101,7 +101,7 @@ def print_summary(portfolio_name, symbol, quantity):
     """
     Print portfolio summary
     """
-    pass
+    portfolio_obj = _load_from_disk(portfolio_name)
 
 
 """
