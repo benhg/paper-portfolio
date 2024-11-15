@@ -7,6 +7,7 @@ The `main` executable for this project.
 
 import argparse
 from data_types import *
+import market_api
 from config import PORTFOLIO_STORAGE_DIR
 
 import os
@@ -75,18 +76,32 @@ def invest(portfolio_name, quantity):
 
 
 def buy(portfolio_name, symbol, quantity):
-    pass
+    """
+    Invest in a portfolio - add money to the settlement fund
+    Quantity here is both number of shares in the settlement fund and also price in dollars 
+    """
+    with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "r") as fh:
+        portfolio_dict_txt = fh.read()
+        portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
+        settlement_symbol = portfolio_obj.metadata.settlement_symbol
+        portfolio_obj.invest(settlement_symbol, quantity)
+        save_to_disk(portfolio_name, portfolio_obj) 
 
 
 def sell(portfolio_name, symbol, quantity):
-    pass
+    with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "r") as fh:
+        portfolio_dict_txt = fh.read()
+        portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
+        settlement_symbol = portfolio_obj.metadata.settlement_symbol
+        portfolio_obj.sell(settlement_symbol, quantity)
+        save_to_disk(portfolio_name, portfolio_obj) 
 
 
 def check_value(symbol, quantity):
     """
-    Print portfolio summary
+    Check value of a specific stock
     """
-    pass
+    return f"Market price of {symbol} : {market_api.get_current_price(symbol)}"
 
 def save_to_disk(portfolio_name, portfolio_obj):
     """
@@ -102,10 +117,17 @@ def update(portfolio_name):
     2. update value in shares
     3. Save portfolio to disk
     """
-    pass
+    with open(f"{PORTFOLIO_STORAGE_DIR}/{portfolio_name}.json", "r") as fh:
+        portfolio_dict_txt = fh.read()
+        portfolio_obj = Portfolio.from_json(portfolio_dict_txt)
+        portfolio_obj.update()
+        save_to_disk(portfolio_name, portfolio_obj) 
 
-def list():
-	pass
+def print_summary(portfolio_name):
+    """
+    Print portfolio summary
+    """
+    pass
 
 
 if __name__ == '__main__':
@@ -117,7 +139,7 @@ if __name__ == '__main__':
         "sell": sell,
         "check_value": check_value,
         "update": update,
-        "list": list
+        "print": print_summary
     }
     parser = argparse.ArgumentParser(
         description="View and manage paper portfolios")

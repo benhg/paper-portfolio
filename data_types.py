@@ -266,6 +266,16 @@ class Portfolio:
         self.holdings_list[self.metadata.settlement_symbol] = set_holding
         self.holdings_list[symbol] = holding
 
+    def update(self):
+        """
+        For each holding:
+        - Update price
+        - Check for dividends
+        """
+        for key, holding in self.holdings_list.items():
+            holding[key].update_value_held()
+            holding[key].check_for_dividends()
+
 
     def sell(self, symbol, amount):
         """
