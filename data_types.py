@@ -10,6 +10,16 @@ from enum import Enum, auto
 
 import market_api
 
+class InvestmentException(Exception):
+    """
+    Error class.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __repr__(self):
+        return f"<InvestmentException msg={self.msg}>"
+
 
 class Type(Enum):
     Sell = auto()
@@ -243,10 +253,36 @@ class Portfolio:
 
         If <symbol> is not <self.settlement_symbol>, subtract equivalent today dollars from settlement
         """
-        pass
+        holding = self.holdings_list.get(symbol, Holding(symbol=symbol))
+        holding.update_value_held()
+        set_holding = self.holdings_list[self.metadata.settlement_symbol].value_held
+        # Don't need to update value because price is always 1
+        if set_holding < (amount * holding.price):
+            raise InvestmentException("Not Enough Money!")
+        # Again, price is always 1 so can do this this way
+        set_holding.value_held -= (amount * holding.price)
+        holding.value_held += (amount * holding.price)
+
+        self.holdings_list[self.metadata.settlement_symbol] = set_holding
+        self.holdings_list[symbol] = holding
+
 
     def sell(self, symbol, amount):
         """
         Sell <amount> of shares in <symbol>. Add equivalent today dollars to settlement.
 
         """
+        if symbol not in self.holdings_list.keys():
+            raise InvestmentException(f"None of {symbol} owned!")
+
+        holding = self.holdings_list.get(symbol, Holding(symbol=symbol))
+        holding.update_value_held()
+        set_holding = self.holdings_list[self.metadata.settlement_symbol].value_held
+        # Again, price is always 1 so can do this this way
+        set_holding.value_held += (amount * holding.price)
+        holding.value_held -= (amount * holding.price)
+
+        self.holdings_list[self.metadata.settlement_symbol] = set_holding
+        self.holdings_list[symbol] = holding
+
+
